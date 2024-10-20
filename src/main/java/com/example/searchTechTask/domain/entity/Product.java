@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.sql.Date;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "product")
@@ -24,8 +25,7 @@ public class Product {
     @Column(name = "start_date")
     private Date startDate;
 
-    @OneToMany
-    @JoinColumn(name = "product_id")
-    private Set<Sku> skus;
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "product", cascade = CascadeType.ALL)
+    private List<Sku> skus = new ArrayList<>();
 
 }

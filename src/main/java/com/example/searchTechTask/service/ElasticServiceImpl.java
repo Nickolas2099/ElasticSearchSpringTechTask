@@ -10,6 +10,8 @@ import com.example.searchTechTask.domain.response.SuccessResponse;
 import com.example.searchTechTask.domain.response.error.Error;
 import com.example.searchTechTask.domain.response.error.ErrorResponse;
 import com.example.searchTechTask.repository.ProductRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +28,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -53,6 +57,7 @@ public class ElasticServiceImpl implements ElasticService {
                         .skuId(sku.getId())
                         .skuColor(sku.getColor())
                         .skuSize(sku.getSize())
+                        .skuPrice(sku.getPrice())
                         .build();
                 skuDocuments.add(skuDocument);
             }
@@ -68,8 +73,9 @@ public class ElasticServiceImpl implements ElasticService {
             try {
                 Request headRequest = new Request("HEAD", "/" + indexName + "/_doc/" + product.getId());
                 var headResponse = elasticClient.performRequest(headRequest);
-
+                log.info("СУЩНОСТЬ PRODUCT: {}", responseDoc);
                 if (headResponse.getStatusLine().getStatusCode() == 404) {
+
                     String json = objectMapper.writeValueAsString(responseDoc);
                     HttpEntity entity = new NStringEntity(json, ContentType.APPLICATION_JSON);
 
@@ -107,6 +113,57 @@ public class ElasticServiceImpl implements ElasticService {
                         .error(Error.builder()
                                 .code(Code.INTERNAL_SERVER_ERROR)
                                 .build()).build(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public ResponseEntity<Response> searchByWord(String searchWord) {
+        try {
+            Request request = new Request("GET", "/" + indexName + "/_search");
+
+            Map<String, Object> query = Map.of(
+                    "query", Map.of(
+                            "bool", Map.of(
+                                    "should", List.of(
+                                            Map.of("match", Map.of("productName", searchWord)),
+                                            Map.of("match", Map.of("skus.skuColor", searchWord))
+                                    ), "minimum_should_match", 1
+                            )
+                    )
+            );
+
+            String json = objectMapper.writeValueAsString(query);
+            HttpEntity entity = new NStringEntity(json, ContentType.APPLICATION_JSON);
+            request.setEntity(entity);
+            var response = elasticClient.performRequest(request);
+
+            String responseBody = EntityUtils.toString(response.getEntity());
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+            // Извлекаем нужные данные
+            List<Map<String, Object>> hits = new ArrayList<>();
+            JsonNode hitsNode = jsonNode.path("hits").path("hits");
+            for (JsonNode hit : hitsNode) {
+                Map<String, Object> hitData = new HashMap<>();
+                hitData.put("id", hit.path("_id").asText());
+                hitData.put("score", hit.path("_score").asDouble());
+                hitData.put("source", hit.path("_source"));
+                hits.add(hitData);
+            }
+
+            return new ResponseEntity<>(SuccessResponse.builder()
+                    .data(hits)
+                    .build(), HttpStatus.OK);
+        } catch(JsonProcessingException ex) {
+            log.error("Error json assembling: `{}`", ex.getMessage());
+            return new ResponseEntity<>(ErrorResponse.builder()
+                    .error(Error.builder().code(Code.INTERNAL_SERVER_ERROR).build())
+                    .build(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (IOException ex) {
+            log.error("Error request sending: {}", ex.getMessage());
+            return new ResponseEntity<>(ErrorResponse.builder()
+                    .error(Error.builder().code(Code.INTERNAL_SERVER_ERROR).build())
+                    .build(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -5,9 +5,7 @@ import com.example.searchTechTask.service.ElasticService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/elastic")
@@ -26,6 +24,14 @@ public class ElasticController {
         return response;
     }
 
+    @GetMapping("/search/{searchWord}")
+    public ResponseEntity<Response> searchByKeyWord(@PathVariable("searchWord") String searchWord) {
+
+        log.info("START endpoint searchByKeyWord, searchWord: `{}`", searchWord);
+        ResponseEntity<Response> response = elasticService.searchByWord(searchWord);
+        log.info("END endpoint searchWord");
+        return response;
+    }
 
 
 }

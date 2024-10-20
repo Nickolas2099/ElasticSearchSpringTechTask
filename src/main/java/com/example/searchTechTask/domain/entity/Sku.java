@@ -1,5 +1,6 @@
 package com.example.searchTechTask.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,8 +24,9 @@ public class Sku {
     @Column(name = "price")
     private double price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
+//    @JsonBackReference
     private Product product;
 
 }
