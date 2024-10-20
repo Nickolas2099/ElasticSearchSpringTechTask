@@ -23,4 +23,8 @@ public class Sku {
     @Column(name = "price")
     private double price;
 
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
+
 }

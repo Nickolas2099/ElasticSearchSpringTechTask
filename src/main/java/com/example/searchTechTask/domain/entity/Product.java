@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.sql.Date;
+import java.util.Set;
 
 @Entity
 @Table(name = "product")
@@ -22,4 +23,9 @@ public class Product {
 
     @Column(name = "start_date")
     private Date startDate;
+
+    @OneToMany
+    @JoinColumn(name = "product_id")
+    private Set<Sku> skus;
+
 }
