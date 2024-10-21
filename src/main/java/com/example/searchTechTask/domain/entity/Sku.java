@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.Set;
-
 @Entity
 @Table(name = "sku")
 @Data
@@ -26,7 +24,6 @@ public class Sku {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
-//    @JsonBackReference
     private Product product;
 
 }

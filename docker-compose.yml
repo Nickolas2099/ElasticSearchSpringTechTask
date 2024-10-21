@@ -7,22 +7,41 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mynetwork
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.24
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - xpack.security.enabled=false
+      - ES_LOG_LEVEL=ERROR
     ports:
       - "9200:9200"
       - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - mynetwork
+
+  app:
+    build: .
+    container_name: spring_app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydatabase
+      SPRING_DATASOURCE_USERNAME: myuser
+      SPRING_DATASOURCE_PASSWORD: mypassword
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - elasticsearch
     networks:
       - mynetwork
 

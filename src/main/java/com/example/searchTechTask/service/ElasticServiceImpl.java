@@ -73,7 +73,7 @@ public class ElasticServiceImpl implements ElasticService {
             try {
                 Request headRequest = new Request("HEAD", "/" + indexName + "/_doc/" + product.getId());
                 var headResponse = elasticClient.performRequest(headRequest);
-                log.info("СУЩНОСТЬ PRODUCT: {}", responseDoc);
+                log.info("ENTITY PRODUCT: {}", responseDoc);
                 if (headResponse.getStatusLine().getStatusCode() == 404) {
 
                     String json = objectMapper.writeValueAsString(responseDoc);
@@ -108,7 +108,7 @@ public class ElasticServiceImpl implements ElasticService {
             log.info("Index creation response: " + EntityUtils.toString(response.getEntity()));
             return new ResponseEntity<>(SuccessResponse.builder().build(), HttpStatus.OK);
         } catch (IOException ex) {
-            log.warn("Index could not be created: {}. {}", indexName, ex.getMessage());
+            log.warn("Index could not be created: `{}`. `{}`, `{}`", indexName, ex.getMessage(), ex.toString());
                 return new ResponseEntity<>(ErrorResponse.builder()
                         .error(Error.builder()
                                 .code(Code.INTERNAL_SERVER_ERROR)
@@ -140,7 +140,6 @@ public class ElasticServiceImpl implements ElasticService {
             String responseBody = EntityUtils.toString(response.getEntity());
             JsonNode jsonNode = objectMapper.readTree(responseBody);
 
-            // Извлекаем нужные данные
             List<Map<String, Object>> hits = new ArrayList<>();
             JsonNode hitsNode = jsonNode.path("hits").path("hits");
             for (JsonNode hit : hitsNode) {

@@ -19,6 +19,7 @@ public class ElasticController {
     public ResponseEntity<Response> synchronizeDbs() {
 
         log.info("START endpoint synchronizeDbs");
+        elasticService.createIndex();
         ResponseEntity<Response> response = elasticService.uploadData();
         log.info("END endpoint synchronizeDbs");
         return response;
